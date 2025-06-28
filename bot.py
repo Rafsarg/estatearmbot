@@ -1,42 +1,45 @@
-
 import os
 import logging
+import asyncio
 from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
-import openai
+from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, filters
 
-logging.basicConfig(level=logging.INFO)
+# Настройки логирования
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    level=logging.INFO
+)
 
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "rafsarg")
-
-openai.api_key = OPENAI_API_KEY
-
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Բարեւ Ձեզ! Ես Ազատուցյան 34 նախագծի օգնականն եմ:")
-
+# Основная логика бота
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_text = update.message.text
-    logging.info(f"User: {user_text}")
+    text = update.message.text.lower()
 
-    response = openai.ChatCompletion.create(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": "Դուք օգնում եք տալ տեղեկություններ 'Ազատուցյան 34' նախագծի մասին"},
-            {"role": "user", "content": user_text}
-        ]
-    )
+    if "цена" in text or "քմ" in text or "стоимость" in text:
+        await update.message.reply_text("1քմ-ի արժեքը 425,000 դրամ է։")
+    elif "ипотека" in text or "հիփոթեք" in text:
+        await update.message.reply_text("Այո, գործում է եկամտահարկի վերադարձի օրենքը։")
+    elif "площадь" in text or "քմ" in text:
+        await update.message.reply_text("Մենք ունենք բնակարաններ՝ 1 սենյականոց (27քմ), 2 սենյականոց (45քմ) և 3 սենյականոց (70քմ)։")
+    elif "номер" in text or "հեռախոս" in text:
+        await update.message.reply_text("Թողեք ձեր հեռախոսահամարը՝ վաճառքի մասնագետը կկապվի Ձեզ հետ։")
+    else:
+        await update.message.reply_text("Շնորհակալություն, հարցը փոխանցվեց մասնագետին։ Կարող եք թողնել հեռախոսահամար 📞")
 
-    answer = response['choices'][0]['message']['content']
-    await update.message.reply_text(answer)
-
+# Асинхронная функция запуска
 async def main():
-    app = ApplicationBuilder().token(BOT_TOKEN).build()
-    app.add_handler(CommandHandler("start", start))
+    TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+
+    if not TELEGRAM_TOKEN:
+        raise Exception("TELEGRAM_TOKEN отсутствует в переменных окружения")
+
+    app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
+
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+
+    print("Бот запущен")
     await app.run_polling()
 
-if __name__ == "__main__":
-    import asyncio
-    asyncio.run(main())
+# Запуск бота без asyncio.run()
+loop = asyncio.get_event_loop()
+loop.create_task(main())
+loop.run_forever()
