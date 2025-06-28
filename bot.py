@@ -33,7 +33,6 @@ async def main():
         raise Exception("TELEGRAM_TOKEN отсутствует в переменных окружения")
 
     app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
-
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
     print("Бот запущен")
